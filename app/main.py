@@ -31,3 +31,10 @@ from .polygon_macro import get_macro_data
 @app.get("/macro-data")
 def macro_data():
     return get_macro_data()
+
+from fastapi.staticfiles import StaticFiles
+import os
+
+# Mount the .well-known directory to serve ai-plugin.json
+if os.path.isdir(".well-known"):
+    app.mount("/.well-known", StaticFiles(directory=".well-known"), name="well-known")
