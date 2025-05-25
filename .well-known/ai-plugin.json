@@ -1,0 +1,19 @@
+
+{
+  "schema_version": "v1",
+  "name_for_model": "options_gpt",
+  "name_for_human": "Options Alpha Architect",
+  "description_for_model": "Access options trade suggestions, Greeks, IV data, and macroeconomic context from Polygon.io and FRED.",
+  "description_for_human": "Get real-time options trade ideas, risk-managed position sizing, and macro context using live market data.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://options-gpt.onrender.com/openapi.json"
+  },
+  "logo_url": "https://options-gpt.onrender.com/logo.png",
+  "contact_email": "you@example.com",
+  "legal_info_url": "https://example.com/legal"
+}
+
