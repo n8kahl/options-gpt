@@ -3,6 +3,25 @@ from .trade_logic import scan_trade
 
 app = FastAPI()
 
+from fastapi.openapi.utils import get_openapi
+
+app = FastAPI()
+
+@app.get("/openapi.json")
+def custom_openapi():
+    openapi_schema = get_openapi(
+        title="Options GPT API",
+        version="1.0.0",
+        description="Live options analysis and macro data",
+        routes=app.routes,
+    )
+    openapi_schema["servers"] = [
+        {
+            "url": "https://options-gpt.onrender.com",
+            "description": "Production server"
+        }
+    ]
+    return openapi_schema
 @app.get("/trade-suggestion")
 def trade_suggestion(symbol: str = Query(...), balance: float = Query(5000)):
     result = scan_trade(symbol.upper(), balance)
