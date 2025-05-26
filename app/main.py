@@ -57,3 +57,6 @@ import os
 # Mount the .well-known directory to serve ai-plugin.json
 if os.path.isdir(".well-known"):
     app.mount("/.well-known", StaticFiles(directory=".well-known"), name="well-known")
+
+    from app.polygon_options import router as polygon_router
+app.include_router(polygon_router)
