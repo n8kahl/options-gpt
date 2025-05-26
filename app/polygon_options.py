@@ -1,48 +1,41 @@
-import os, requests
-from dotenv import load_dotenv
+import requests
+import os
 
-load_dotenv()
-API_KEY = os.getenv("POLYGON_API_KEY")
+POLYGON_API_KEY = os.getenv("POLYGON_API_KEY")
 
 def get_options_snapshot(symbol, expiry=None, option_type=None, min_delta=None, max_delta=None):
-    url = f"https://api.polygon.io/v3/snapshot/options/{symbol.upper()}?apiKey={API_KEY}"
-    res = requests.get(url).json()
-    contracts = res.get("results", [])
+    url = f"https://api.polygon.io/v3/snapshot/options/{symbol}?apiKey={POLYGON_API_KEY}"
+    res = requests.get(url)
+    raw = res.json()
 
-    filtered = []
-    for c in contracts:
-        o = c.get("details", {})
-        g = c.get("greeks", {})
-        t = c.get("last_quote", {})
+    contracts = []
 
-        # Skip if missing data
-        if not all(k in g for k in ("delta", "implied_volatility")):
-            continue
+    for c in raw.get("results", []):
+        try:
+            details = c.get("details", {})
+            greeks = c.get("greeks", {})
+            delta = greeks.get("delta")
+            iv = c.get("implied_volatility")
+            oi = c.get("open_interest")
 
-        # Apply filters
-        if expiry and o.get("expiration_date") != expiry:
-            continue
-        if option_type and o.get("contract_type") != option_type.upper():
-            continue
-        if min_delta and g.get("delta", 0) < float(min_delta):
-            continue
-        if max_delta and g.get("delta", 0) > float(max_delta):
-            continue
+            if option_type and details.get("contract_type", "").lower() != option_type.lower():
+                continue
+            if min_delta and (delta is None or delta < min_delta):
+                continue
+            if max_delta and (delta is None or delta > max_delta):
+                continue
 
-        filtered.append({
-            "symbol": o.get("ticker"),
-            "strike": o.get("strike_price"),
-            "expiration": o.get("expiration_date"),
-            "type": o.get("contract_type"),
-            "delta": round(g.get("delta", 0), 2),
-            "iv": round(g.get("implied_volatility", 0), 4),
-            "theta": round(g.get("theta", 0), 2),
-            "gamma": round(g.get("gamma", 0), 2),
-            "vega": round(g.get("vega", 0), 2),
-            "bid": t.get("bid"),
-            "ask": t.get("ask"),
-            "open_interest": c.get("open_interest"),
-            "volume": c.get("day", {}).get("volume")
-        })
+            contracts.append({
+                "symbol": details.get("ticker"),
+                "strike": details.get("strike_price"),
+                "expiration": details.get("expiration_date"),
+                "delta": round(delta, 3) if delta else None,
+                "iv": round(iv, 3) if iv else None,
+                "open_interest": oi,
+                "bid": c.get("day", {}).get("bid"),
+                "ask": c.get("day", {}).get("ask")
+            })
+        except Exception as e:
+            print(f"Skipping contract due to error: {e}")
 
-    return filtered
+    return contracts
